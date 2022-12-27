@@ -51,3 +51,7 @@ resource "vsphere_virtual_machine" "vm" {
     ]
   }
 }
+
+output "ip" {
+  value = vsphere_virtual_machine.vm.default_ip_address
+}
