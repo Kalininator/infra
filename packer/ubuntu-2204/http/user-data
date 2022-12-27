@@ -1,0 +1,36 @@
+#cloud-config
+autoinstall:
+    version: 1
+    early-commands:
+        # workaround to stop ssh for packer as it thinks it timed out
+        - sudo systemctl stop ssh
+    locale: en_US
+    keyboard:
+        layout: en
+        variant: us
+    packages: [open-vm-tools, openssh-server, net-tools, perl, open-iscsi, ntp, curl, vim, ifupdown, zip, unzip, gnupg2, software-properties-common, apt-transport-https, ca-certificates, lsb-release, python3-pip, jq, cloud-init]
+    network:
+        network:
+            version: 2
+            ethernets:
+                ens192:
+                    dhcp4: true
+    identity:
+        hostname: ubuntu-server
+        username: kal
+        # apt-get install whois
+        # mkpasswd -m sha-512 --rounds=4096
+        password: "$6$rounds=4096$l2ySmM.t79nscN6g$sAkuc89mSFMgaku2waLByAZHwP1MSp88kH4MeduKPezluKgj/n2UAR78g0t4T/4mlwP88mnij6VsZIjkBDPCK."
+    ssh:
+        install-server: yes
+        allow-pw: yes
+        authorized-keys:
+            - "ssh-rsa AAAAB4NzaC1yc2EAAAADAQABAAABAQCsZVa2osG9BCD77G2j2hxgrU8jeQDp7AH6UcoC9a4YMYbUZPvRXzLsc1sKvpXh8yRmg0Zm1Gj+cKtOnJ5XgpyX0TWJ6h7RXpv0WnAGCKLP+TqRFZBodG0mKF3MxPCZRnL3jwtuco6hf73RJGw7r4BmUStk1GwvVLoKkDEmaA6JsTG1cHdrastLCBm5z4tVQ9QSptfzIB+E0oic5iSpExFmK7sVe+j7Yk3uGdO26W2h82ajNHDuTC7l85i+bRqXtOfTugHqDlE/zgWEzX6BHus0Zp6h13gDLAHecdzfPwiZtR+kt3+LabJcWI7CwYif59TqszI6IXD9Sae2/oSzXPSx kal@kal-macbook.local"
+    storage:
+        layout:
+            name: direct
+    user-data:
+        disable_root: false
+    late-commands:
+        - echo 'kal ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/kal
+        - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/kal
