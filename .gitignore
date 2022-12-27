@@ -1,0 +1,2 @@
+.terraform
+packer/ubuntu-2204/vsphere.pkrvars.hcl
