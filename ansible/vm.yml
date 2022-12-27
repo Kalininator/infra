@@ -1,0 +1,58 @@
+---
+- hosts: vm.colo.kalinin.xyz
+  become: yes
+  roles:
+    - role: geerlingguy.docker
+      docker_users:
+        - kal
+  tasks:
+    - name: Docker compose file
+      copy:
+        dest: /home/kal/docker-compose.yml
+        content: |
+          version: "3.3"
+          services:
+            traefik:
+              image: "traefik:v2.9"
+              container_name: "traefik"
+              command:
+                #- "--log.level=DEBUG"
+                - "--api.insecure=true"
+                - "--providers.docker=true"
+                - "--providers.docker.exposedbydefault=false"
+                - "--entrypoints.web.address=:80"
+              ports:
+                - "80:80"
+                - "8080:8080"
+              volumes:
+                - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+            whoami:
+              image: "traefik/whoami"
+              container_name: "simple-service"
+              labels:
+                - "traefik.enable=true"
+                - "traefik.http.routers.whoami.rule=Host(`vm.colo.kalinin.xyz`)"
+                - "traefik.http.routers.whoami.entrypoints=web"
+    - name: Service file creation
+      copy:
+        dest: /etc/systemd/system/docker-compose.service
+        content: |
+          [Unit]
+          Description=Docker Compose Service
+          Requires=docker.service
+          After=docker.service
+          [Service]
+          Type=oneshot
+          RemainAfterExit=true
+          WorkingDirectory=/home/kal
+          ExecStart=/usr/local/bin/docker-compose up -d --remove-orphans
+          ExecStop=/usr/local/bin/docker-compose down
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Systemd service activation
+      systemd:
+        name: docker-compose.service
+        enabled: yes
+        state: started
